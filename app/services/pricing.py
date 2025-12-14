@@ -30,7 +30,13 @@ class PricingService:
         )
 
         if not updated_price:
-            raise NotFoundException('Price')
+            price_id = self.repository.insert_one(
+                price=new_price,
+                type=pricing_type
+            )
+            return (await self.repository.find(
+                id=price_id
+            ))[0]
 
         return updated_price
 
