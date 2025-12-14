@@ -34,8 +34,8 @@ class PricingService:
 
         return updated_price
 
-    def determine_visit_end_time(self, start_time: datetime, payment_amount: float):
-        hourly_price = self.get_prices(pricing_type=PricingTypeEnum.HOURLY)[0]['price']  # it returns list of dicts
+    async def determine_visit_end_time(self, start_time: datetime, payment_amount: float):
+        hourly_price = (await self.get_prices(pricing_type=PricingTypeEnum.HOURLY))[0]['price']
 
         total_hours = payment_amount / hourly_price
         hours = int(total_hours)

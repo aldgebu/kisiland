@@ -51,7 +51,7 @@ class CustomerService:
             customer.last_name=membership['last_name']
             customer.first_name=membership['first_name']
         elif customer.visit_type == CustomerVisitTypeEnum.HOURLY:
-            end_time = self.pricing_service.determine_visit_end_time(
+            end_time = await self.pricing_service.determine_visit_end_time(
                 start_time=start_time,
                 payment_amount=customer.payment_amount,
             )

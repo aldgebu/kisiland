@@ -25,7 +25,7 @@ async def get_customers(
     return await service.find(filters=filters)
 
 
-@router.get('/active', status_code=status.HTTP_200_OK, response_model=CustomerSchema)
+@router.get('/active', status_code=status.HTTP_200_OK, response_model=List[CustomerSchema])
 async def get_active_customers(
     mongo_db: AsyncIOMotorDatabase = Depends(get_mongo_db),
     token_payload: dict = Depends(AuthService.token_required),
