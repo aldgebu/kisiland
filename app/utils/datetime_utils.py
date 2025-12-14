@@ -1,5 +1,5 @@
 from zoneinfo import ZoneInfo
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 
 
 class DatetimeUtils:
@@ -17,3 +17,17 @@ class DatetimeUtils:
         dt = datetime.now(tz=tz) + delta
 
         return dt.isoformat() if in_iso_format else dt
+
+    @classmethod
+    def end_of_today(
+        cls,
+        tz: ZoneInfo = ZoneInfo("UTC"),
+        in_iso_format: bool = False,
+    ):
+        now = datetime.now(tz)
+        end_of_day = datetime.combine(
+            now.date(),
+            time(23, 59, 59),
+            tzinfo=tz,
+        )
+        return end_of_day.isoformat() if in_iso_format else end_of_day
