@@ -3,7 +3,7 @@ Python/Fastapi project for KisiLand
 
 
 # RUN
-Run -> fastapi run app/main.py
+Run -> `fastapi run app/main.py`
 
 # Authorization
 username = admin
