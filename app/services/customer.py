@@ -33,9 +33,15 @@ class CustomerService:
             **filters.model_dump(exclude_none=True)
         )
 
+    async def get_active_customers(self):
+        current_time = DatetimeUtils.get_datetime()
+        return await self.repository.get_active_customers(
+            current_time=current_time,
+        )
+
     async def create(self, customer: CustomerCreateSchema) -> CustomerSchema:
         start_time = DatetimeUtils.get_datetime()
-        end_time = None
+        end_time = DatetimeUtils.end_of_today()
 
         if customer.payment_type == PaymentTypeEnum.MEMBERSHIP:
             membership = await self.membership_service.validate_and_use_membership_visit(
