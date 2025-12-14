@@ -1,3 +1,5 @@
+from typing import Optional
+
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from datetime import datetime
@@ -25,4 +27,25 @@ class CustomerRepository(DocumentRepository):
         )
 
         cursor.sort([('start_time', -1)])
+        return await cursor.to_list(length=None)
+
+    async def get_customers(
+        self,
+        from_time: Optional[datetime] = None,
+        to_time: Optional[datetime] = None,
+        status: Optional[CustomerStatusEnum] = None
+    ):
+        filters = {}
+
+        if from_time or to_time:
+            filters['start_time'] = {}
+            if from_time:
+                filters['start_time']['$gte'] = from_time
+            if to_time:
+                filters['start_time']['$lte'] = to_time
+
+        if status:
+            filters['status'] = status
+
+        cursor = self.collection.find(filters)
         return await cursor.to_list(length=None)

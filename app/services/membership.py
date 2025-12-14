@@ -5,11 +5,21 @@ from app.schemas.membership import MembershipSchema, MembershipCreateSchema, Mem
     MembershipUpdateSchema
 
 from app.repositories.membership import MembershipRepository
+from app.schemas.statistic import MembershipStatisticSchema
 
 
 class MembershipService:
     def __init__(self, db: AsyncIOMotorDatabase):
         self.repository = MembershipRepository(db=db)
+
+    async def get_statistics(self, params: MembershipStatisticSchema):
+        memberships = await self.repository.get_memberships(from_time=params.from_time, to_time=params.to_time)
+
+        income = 0
+        for membership in memberships:
+            income += membership['payment_amount'] or 0
+
+        return {'income': income}
 
     async def find(self, membership_info: MembershipFindSchema):
         return await self.repository.find(

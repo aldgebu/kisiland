@@ -17,6 +17,7 @@ from app.repositories.customer import CustomerRepository
 
 from app.exceptions.general import NotFoundException, UnlimitedVisitPricingException
 
+from app.schemas.statistic import CustomerStatisticSchema
 from app.schemas.customer import CustomerCreateSchema, CustomerSchema, CustomerFindSchema
 
 
@@ -26,6 +27,19 @@ class CustomerService:
         self.membership_service = MembershipService(db=db)
 
         self.repository = CustomerRepository(db)
+
+    async def get_statistics(self, params: CustomerStatisticSchema):
+        customers = await self.repository.get_customers(
+            from_time=params.from_time,
+            to_time=params.to_time,
+            status=params.status
+        )
+
+        income = 0
+        for customer in customers:
+            income += customer['payment_amount'] or 0
+
+        return {'income': income}
 
     async def find(self, filters: CustomerFindSchema) -> List[CustomerSchema]:
         return await self.repository.find(
