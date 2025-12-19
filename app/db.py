@@ -9,6 +9,7 @@ from app.utils.datetime_utils import DatetimeUtils
 
 
 class Base(declarative_base()):
+    __abstract__ = True
     created_at = Column(DateTime, nullable=False, default=lambda: DatetimeUtils.get_datetime())
 
 

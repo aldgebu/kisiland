@@ -4,6 +4,8 @@ from pydantic import BaseModel
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.customer import Customers
+
 from app.enums.payment import PaymentTypeEnum
 from app.enums.pricing import PricingTypeEnum
 from app.enums.customer import CustomerVisitTypeEnum, CustomerStatusEnum
@@ -37,7 +39,7 @@ class CustomerService:
 
         income = 0
         for customer in customers:
-            income += customer['payment_amount'] or 0
+            income += customer.payment_amount or 0
 
         return {'income': income}
 
@@ -62,15 +64,15 @@ class CustomerService:
                 membership_id=customer.membership_id
             )
 
-            customer.last_name=membership['last_name']
-            customer.first_name=membership['first_name']
+            customer.last_name=membership.lsat_name
+            customer.first_name=membership.first_name
         elif customer.visit_type == CustomerVisitTypeEnum.HOURLY:
             end_time = await self.pricing_service.determine_visit_end_time(
                 payment_amount=customer.payment_amount,
             )
         elif customer.visit_type == CustomerVisitTypeEnum.UNLIMITED:
             prices = await self.pricing_service.get_prices(pricing_type=PricingTypeEnum.UNLIMITED)
-            unlimited_visit_price = prices[0]['price']
+            unlimited_visit_price = prices[0].price
 
             if customer.payment_amount != unlimited_visit_price:
                 raise UnlimitedVisitPricingException(
@@ -78,18 +80,19 @@ class CustomerService:
                     payed_amount=customer.payment_amount,
                 )
 
-        return await self.repository.create(
+        customer = await self.repository.create(
             start_time=start_time,
             end_time=end_time,
             status=CustomerStatusEnum.SUCCESSFUL,
             **customer.model_dump()
         )
+        return customer
 
-    async def update(self, customer_id: int, updates: dict | BaseModel):
+    async def update(self, customer_id: int, updates: dict | BaseModel) -> Customers:
         if not isinstance(updates, dict):
             updates = updates.model_dump(exclude_none=True)
 
-        customer = self.repository.find(id=customer_id)
+        customer = await self.repository.find(id=customer_id, status=CustomerStatusEnum.SUCCESSFUL, get_first=True)
         if not customer:
             raise NotFoundException(data_name='Customer')
 
@@ -108,5 +111,5 @@ class CustomerService:
             }
         )
 
-        if customer['payment_type'] == PaymentTypeEnum.MEMBERSHIP:
-            await self.membership_service.delete_visit(membership_id=customer['membership_id'])
+        if customer.payment_type == PaymentTypeEnum.MEMBERSHIP:
+            await self.membership_service.delete_visit(membership_id=customer.membership_id)

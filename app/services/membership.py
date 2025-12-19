@@ -18,7 +18,7 @@ class MembershipService:
 
         income = 0
         for membership in memberships:
-            income += membership['payment_amount'] or 0
+            income += membership.payment_amount or 0
 
         return {'income': income}
 
@@ -30,12 +30,11 @@ class MembershipService:
 
     async def create(self, member_data: MembershipCreateSchema) -> MembershipSchema:
         return await self.repository.create(
-            visits=0,
             **member_data.model_dump()
         )
 
     async def update(self, membership_id: int, membership_updates: MembershipUpdateSchema):
-        membership = await self.repository.find(id=membership_id)
+        membership = await self.repository.find(id=membership_id, get_first=True)
         if not membership:
             raise NotFoundException('Membership')
 

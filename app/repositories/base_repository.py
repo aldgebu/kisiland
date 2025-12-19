@@ -13,14 +13,20 @@ class BaseRepository:
         self.model = model
 
     async def save_to_db(self, obj, flush: bool = False, commit: bool = False):
+        print(type(obj))
+        print(obj)
+        print(flush)
+        print(commit)
         try:
             self.db.add(obj)
             if flush:
                 await self.db.flush()
             if commit:
+                print(2)
                 await self.commit_session()
             await self.db.refresh(obj)
         except Exception as e:
+            print(e)
             try:
                 await self.db.rollback()
             except Exception as e:
@@ -43,6 +49,9 @@ class BaseRepository:
         try:
             await self.db.commit()
         except Exception as e:
+            print()
+            print(e)
+            print()
             pass
 
     # General methods all models

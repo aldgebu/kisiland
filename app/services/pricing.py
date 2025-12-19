@@ -17,7 +17,7 @@ class PricingService:
         self.model = Pricing
         self.repository = PricingRepository(db=db)
 
-    async def get_prices(self, pricing_type: Optional[PricingTypeEnum] = None) -> List[Dict]:
+    async def get_prices(self, pricing_type: Optional[PricingTypeEnum] = None) -> List[Pricing]:
         cr = self.repository.find()
         if pricing_type:
             cr = self.repository.find(type=pricing_type)
@@ -25,7 +25,7 @@ class PricingService:
         return await cr
 
     async def change_price(self, new_price: float, pricing_type: PricingTypeEnum):
-        price = await self.repository.find(type=pricing_type)
+        price = await self.repository.find(type=pricing_type, get_first=True)
         if not price:
             price = self.model(price=new_price, type=pricing_type)
         else:
@@ -35,7 +35,7 @@ class PricingService:
         return price
 
     async def determine_visit_end_time(self, payment_amount: float):
-        hourly_price = (await self.get_prices(pricing_type=PricingTypeEnum.HOURLY))[0]['price']
+        hourly_price = (await self.get_prices(pricing_type=PricingTypeEnum.HOURLY))[0].price
 
         total_hours = payment_amount / hourly_price
         hours = int(total_hours)

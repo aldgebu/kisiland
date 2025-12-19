@@ -20,7 +20,9 @@ class Customers(Base):
     start_time = Column(DateTime)
     end_time = Column(DateTime)
 
-    membership_id = Column(String(100), ForeignKey('membership.id'), nullable=True)
+    membership_id = Column(Integer, ForeignKey('membership.id'), nullable=True)
+
+    deleting_reason = Column(String, nullable=True)
 
     status = Column(
         Enum(

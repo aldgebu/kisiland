@@ -9,6 +9,7 @@ class Membership(Base):
     id = Column(Integer, primary_key=True)
     allowed_visits = Column(Integer, nullable=False)
     payment_amount = Column(Float, nullable=False)
+    visits = Column(Integer, nullable=False, default=0)
 
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
