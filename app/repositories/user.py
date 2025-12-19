@@ -1,11 +1,13 @@
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.repositories.document import DocumentRepository
+from app.models.user import Users
+
+from app.repositories.base_repository import BaseRepository
 
 
-class UserRepository(DocumentRepository):
-    def __init__(self, db: AsyncIOMotorDatabase):
+class UserRepository(BaseRepository):
+    def __init__(self, db: AsyncSession):
         self.db = db
-        self.collection_name = 'users'
+        self.model = Users
 
-        super().__init__(db=self.db, collection_name=self.collection_name)
+        super().__init__(db=self.db, model=self.model)

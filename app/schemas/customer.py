@@ -17,7 +17,7 @@ class CustomerCreateSchema(BaseModel):
     visit_type: CustomerVisitTypeEnum = CustomerVisitTypeEnum.UNLIMITED
 
     payment_type: PaymentTypeEnum
-    membership_id: Optional[str] = None
+    membership_id: Optional[int] = None
     payment_amount: Optional[float] = None
 
     comment: Optional[str] = None
@@ -31,7 +31,7 @@ class CustomerUpdateSchema(BaseModel):
 
 
 class CustomerFindSchema(PaginationSchema):
-    id: Optional[str] = None
+    id: Optional[int] = None
 
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -43,22 +43,13 @@ class CustomerFindSchema(PaginationSchema):
     payment_type: Optional[PaymentTypeEnum] = None
     visit_type: Optional[CustomerVisitTypeEnum] = None
 
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
+    from_time: Optional[datetime] = None
+    to_time: Optional[datetime] = None
 
 
 class CustomerSchema(CustomerCreateSchema):
-    id: str
+    id: int
     start_time: datetime
     end_time: Optional[datetime] = None
 
     status: CustomerStatusEnum
-
-    @model_validator(mode='before')
-    @classmethod
-    def validate_before(cls, data: dict):
-        _id = data.get('_id')
-        if _id and not isinstance(_id, str):
-            data['id'] = str(data['_id'])
-
-        return data

@@ -11,16 +11,27 @@ class _Settings(BaseSettings):
 
     JWT_SECRET_KEY: str
 
-    MONGODB_URI: str
-    MONGODB_DATABASE: str
+    PROD_DATABASE_URL: str = ''
+    DEV_DATABASE_URL: str | None = None
+
+    MONGODB_URI: str = ''
+    MONGODB_DATABASE: str = ''
 
 
 class _DevelopmentSettings(_Settings):
     debug: bool = True
 
+    @property
+    def database_url(self):
+        return self.DEV_DATABASE_URL
+
 
 class _ProductionSettings(_Settings):
     debug: bool = False
+
+    @property
+    def database_url(self):
+        return self.PROD_DATABASE_URL
 
 
 _settings = _Settings()

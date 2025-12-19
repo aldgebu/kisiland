@@ -1,8 +1,8 @@
 from typing import List
 
-from motor.motor_asyncio import AsyncIOMotorDatabase
-
 from pydantic import BaseModel
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.enums.payment import PaymentTypeEnum
 from app.enums.pricing import PricingTypeEnum
@@ -22,7 +22,7 @@ from app.schemas.customer import CustomerCreateSchema, CustomerSchema, CustomerF
 
 
 class CustomerService:
-    def __init__(self, db: AsyncIOMotorDatabase):
+    def __init__(self, db: AsyncSession):
         self.pricing_service = PricingService(db=db)
         self.membership_service = MembershipService(db=db)
 
@@ -43,7 +43,7 @@ class CustomerService:
 
     async def find(self, filters: CustomerFindSchema) -> List[CustomerSchema]:
         return await self.repository.find(
-            sort=[('start_time', 1)],
+            sort_by_start_time_desc=True,
             **filters.model_dump(exclude_none=True)
         )
 
@@ -66,7 +66,6 @@ class CustomerService:
             customer.first_name=membership['first_name']
         elif customer.visit_type == CustomerVisitTypeEnum.HOURLY:
             end_time = await self.pricing_service.determine_visit_end_time(
-                start_time=start_time,
                 payment_amount=customer.payment_amount,
             )
         elif customer.visit_type == CustomerVisitTypeEnum.UNLIMITED:
@@ -79,36 +78,28 @@ class CustomerService:
                     payed_amount=customer.payment_amount,
                 )
 
-        inserted_id = await self.repository.insert_one(
+        return await self.repository.create(
             start_time=start_time,
             end_time=end_time,
             status=CustomerStatusEnum.SUCCESSFUL,
             **customer.model_dump()
         )
 
-        return CustomerSchema(
-            id=inserted_id,
-            start_time=start_time,
-            end_time=end_time,
-            status=CustomerStatusEnum.SUCCESSFUL,
-            **customer.model_dump()
-        )
-
-    async def update(self, customer_id: str, updates: dict | BaseModel):
+    async def update(self, customer_id: int, updates: dict | BaseModel):
         if not isinstance(updates, dict):
             updates = updates.model_dump(exclude_none=True)
 
-        customer = await self.repository.find_one_and_update(
-            filters={'_id': customer_id},
-            updates=updates
-        )
-
+        customer = self.repository.find(id=customer_id)
         if not customer:
             raise NotFoundException(data_name='Customer')
 
+        for key, value in updates.items():
+            setattr(customer, key, value)
+
+        await self.repository.save_to_db(customer, commit=True)
         return customer
 
-    async def delete(self, customer_id: str, deleting_reason: str):
+    async def delete(self, customer_id: int, deleting_reason: str):
         customer = await self.update(
             customer_id=customer_id,
             updates={

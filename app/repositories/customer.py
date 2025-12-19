@@ -1,33 +1,41 @@
 from typing import Optional
 
-from motor.motor_asyncio import AsyncIOMotorDatabase
-
 from datetime import datetime
+
+from operator import le, eq
+
+from sqlalchemy import select, desc
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.customer import Customers
 
 from app.enums.customer import CustomerStatusEnum
 
-from app.repositories.document import DocumentRepository
+from app.repositories.base_repository import BaseRepository
 
 
-class CustomerRepository(DocumentRepository):
-    def __init__(self, db: AsyncIOMotorDatabase):
+class CustomerRepository(BaseRepository):
+    def __init__(self, db: AsyncSession):
         self.db = db
-        self.collection_name = 'customers'
-        self.collection = self.db[self.collection_name]
+        self.model = Customers
 
-        super().__init__(db=self.db, collection_name=self.collection_name)
+        super().__init__(db=self.db, model=self.model)
 
     async def get_active_customers(self, current_time: datetime):
-        cursor = self.collection.find(
-            {
-                'start_time': {'$lte': current_time},
-                'end_time': {'$gte': current_time},
-                'status': CustomerStatusEnum.SUCCESSFUL,
-            }
+        stmt = (
+            select(self.model)
+            .where(
+                le(self.model.start_time, current_time),
+                le(current_time, self.model.end_time),
+                self.model.status == CustomerStatusEnum.SUCCESSFUL
+            )
         )
 
-        cursor.sort([('start_time', -1)])
-        return await cursor.to_list(length=None)
+        stmt = stmt.order_by(desc(self.model.start_time))  # type: ignore - pycharm wrong warning!
+
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
 
     async def get_customers(
         self,
@@ -35,17 +43,14 @@ class CustomerRepository(DocumentRepository):
         to_time: Optional[datetime] = None,
         status: Optional[CustomerStatusEnum] = None
     ):
-        filters = {}
+        stmt = select(self.model)
 
-        if from_time or to_time:
-            filters['start_time'] = {}
-            if from_time:
-                filters['start_time']['$gte'] = from_time
-            if to_time:
-                filters['start_time']['$lte'] = to_time
-
+        if from_time:
+            stmt = stmt.where(le(from_time, self.model.start_time))
+        if to_time:
+            stmt = stmt.where(le(self.model.start_time, to_time))
         if status:
-            filters['status'] = status
+            stmt = stmt.where(eq(self.model.status, status))
 
-        cursor = self.collection.find(filters)
-        return await cursor.to_list(length=None)
+        result = await self.db.execute(stmt)
+        return result.scalars().all()

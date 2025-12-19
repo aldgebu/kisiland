@@ -1,10 +1,14 @@
 from fastapi import APIRouter, status, Depends
-from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from app.mongo import get_mongo_db
-from app.schemas.statistic import CustomerStatisticSchema, MembershipStatisticSchema
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db import get_db
+
 from app.services.customer import CustomerService
 from app.services.membership import MembershipService
+
+from app.schemas.statistic import CustomerStatisticSchema, MembershipStatisticSchema
+
 
 router = APIRouter(prefix='/statistic', tags=['statistic'])
 
@@ -12,16 +16,16 @@ router = APIRouter(prefix='/statistic', tags=['statistic'])
 @router.get('/customers', status_code=status.HTTP_200_OK)
 async def get_statistic(
     params: CustomerStatisticSchema = Depends(),
-    mongo_db: AsyncIOMotorDatabase = Depends(get_mongo_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    service = CustomerService(db=mongo_db)
+    service = CustomerService(db=db)
     return await service.get_statistics(params=params)
 
 
 @router.get('/memberships')
 async def get_memberships(
     params: MembershipStatisticSchema = Depends(),
-    mongo_db: AsyncIOMotorDatabase = Depends(get_mongo_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    service = MembershipService(db=mongo_db)
+    service = MembershipService(db=db)
     return await service.get_statistics(params=params)
