@@ -80,13 +80,12 @@ class CustomerService:
                     payed_amount=customer.payment_amount,
                 )
 
-        customer = await self.repository.create(
+        return await self.repository.create(
             start_time=start_time,
             end_time=end_time,
             status=CustomerStatusEnum.SUCCESSFUL,
             **customer.model_dump()
         )
-        return customer
 
     async def update(self, customer_id: int, updates: dict | BaseModel) -> Customers:
         if not isinstance(updates, dict):
