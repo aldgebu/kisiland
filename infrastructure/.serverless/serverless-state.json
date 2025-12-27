@@ -1,0 +1,364 @@
+{
+  "service": {
+    "service": "fastapi-service",
+    "serviceObject": {
+      "name": "fastapi-service"
+    },
+    "provider": {
+      "name": "aws",
+      "profile": "kisiland",
+      "runtime": "python3.12",
+      "region": "us-east-1",
+      "stage": "dev",
+      "memorySize": 512,
+      "timeout": 30,
+      "environment": {
+        "STAGE": "dev",
+        "ENV_TYPE": "development",
+        "JWT_SECRET_KEY": "9fc336690a1744b1ad1c81e7566780f8",
+        "DEV_DATABASE_URL": "postgresql+asyncpg://postgres:c141ef8abaa84f748d4cb7c23626f282@kisiland-db.cg34gm8y4ymc.us-east-1.rds.amazonaws.com:5432/kisiland_dev",
+        "PROD_DATABASE_URL": "postgresql+asyncpg://postgres:c141ef8abaa84f748d4cb7c23626f282@kisiland-db.cg34gm8y4ymc.us-east-1.rds.amazonaws.com:5432/kisiland_prod"
+      },
+      "versionFunctions": true,
+      "compiledCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "ApiLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/fastapi-service-dev-api"
+            }
+          },
+          "IamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "fastapi-service",
+                        "dev",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream",
+                          "logs:CreateLogGroup",
+                          "logs:TagResource"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/fastapi-service-dev*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/fastapi-service-dev*:*:*"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "fastapi-service",
+                    "dev",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    "lambdaRole"
+                  ]
+                ]
+              }
+            }
+          },
+          "ApiLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": "serverless-framework-deployments-us-east-1-4082cc96-9bff",
+                "S3Key": "serverless/fastapi-service/dev/1766835564355-2025-12-27T11:39:24.355Z/fastapi-service.zip"
+              },
+              "Handler": "lambda_handler.handler",
+              "Runtime": "python3.12",
+              "FunctionName": "fastapi-service-dev-api",
+              "MemorySize": 512,
+              "Timeout": 30,
+              "Environment": {
+                "Variables": {
+                  "STAGE": "dev",
+                  "ENV_TYPE": "development",
+                  "JWT_SECRET_KEY": "9fc336690a1744b1ad1c81e7566780f8",
+                  "DEV_DATABASE_URL": "postgresql+asyncpg://postgres:c141ef8abaa84f748d4cb7c23626f282@kisiland-db.cg34gm8y4ymc.us-east-1.rds.amazonaws.com:5432/kisiland_dev",
+                  "PROD_DATABASE_URL": "postgresql+asyncpg://postgres:c141ef8abaa84f748d4cb7c23626f282@kisiland-db.cg34gm8y4ymc.us-east-1.rds.amazonaws.com:5432/kisiland_prod"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "ApiLogGroup"
+            ]
+          },
+          "ApiLambdaVersionHp7hswwKr4i4c7hx4tXInDZzzIc6AYeHLme8dJDJvB4": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "ApiLambdaFunction"
+              },
+              "CodeSha256": "2dZLTmrZ6KNKe9vzqanph/2xcKfigEhYmX/aQ27z0gw="
+            }
+          },
+          "HttpApi": {
+            "Type": "AWS::ApiGatewayV2::Api",
+            "Properties": {
+              "Name": "dev-fastapi-service",
+              "ProtocolType": "HTTP"
+            }
+          },
+          "HttpApiStage": {
+            "Type": "AWS::ApiGatewayV2::Stage",
+            "Properties": {
+              "ApiId": {
+                "Ref": "HttpApi"
+              },
+              "StageName": "$default",
+              "AutoDeploy": true,
+              "DefaultRouteSettings": {
+                "DetailedMetricsEnabled": false
+              }
+            }
+          },
+          "ApiLambdaPermissionHttpApi": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "ApiLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "HttpApi"
+                    },
+                    "/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "HttpApiIntegrationApi": {
+            "Type": "AWS::ApiGatewayV2::Integration",
+            "Properties": {
+              "ApiId": {
+                "Ref": "HttpApi"
+              },
+              "IntegrationType": "AWS_PROXY",
+              "IntegrationUri": {
+                "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"ApiLambdaPermissionHttpApi\"][\"Properties\"][\"FunctionName\"]"
+              },
+              "PayloadFormatVersion": "2.0",
+              "TimeoutInMillis": 30000
+            }
+          },
+          "HttpApiRouteAnyProxyVar": {
+            "Type": "AWS::ApiGatewayV2::Route",
+            "Properties": {
+              "ApiId": {
+                "Ref": "HttpApi"
+              },
+              "RouteKey": "ANY /{proxy+}",
+              "Target": {
+                "Fn::Join": [
+                  "/",
+                  [
+                    "integrations",
+                    {
+                      "Ref": "HttpApiIntegrationApi"
+                    }
+                  ]
+                ]
+              }
+            },
+            "DependsOn": "HttpApiIntegrationApi"
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": "serverless-framework-deployments-us-east-1-4082cc96-9bff",
+            "Export": {
+              "Name": "sls-fastapi-service-dev-ServerlessDeploymentBucketName"
+            }
+          },
+          "ApiLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "ApiLambdaVersionHp7hswwKr4i4c7hx4tXInDZzzIc6AYeHLme8dJDJvB4"
+            },
+            "Export": {
+              "Name": "sls-fastapi-service-dev-ApiLambdaFunctionQualifiedArn"
+            }
+          },
+          "HttpApiId": {
+            "Description": "Id of the HTTP API",
+            "Value": {
+              "Ref": "HttpApi"
+            },
+            "Export": {
+              "Name": "sls-fastapi-service-dev-HttpApiId"
+            }
+          },
+          "HttpApiUrl": {
+            "Description": "URL of the HTTP API",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  "https://",
+                  {
+                    "Ref": "HttpApi"
+                  },
+                  ".execute-api.",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ".",
+                  {
+                    "Ref": "AWS::URLSuffix"
+                  }
+                ]
+              ]
+            },
+            "Export": {
+              "Name": "sls-fastapi-service-dev-HttpApiUrl"
+            }
+          }
+        }
+      },
+      "vpc": {}
+    },
+    "custom": {
+      "pythonRequirements": {
+        "fileName": "../requirements.txt",
+        "slim": false,
+        "invalidateCaches": true
+      }
+    },
+    "pluginsData": {},
+    "functions": {
+      "api": {
+        "handler": "lambda_handler.handler",
+        "events": [
+          {
+            "httpApi": {
+              "path": "/{proxy+}",
+              "method": "ANY"
+            },
+            "resolvedMethod": "ANY",
+            "resolvedPath": "/{proxy+}"
+          }
+        ],
+        "name": "fastapi-service-dev-api",
+        "module": ".",
+        "package": {},
+        "memory": 512,
+        "timeout": 30,
+        "runtime": "python3.12",
+        "vpc": {},
+        "versionLogicalId": "ApiLambdaVersionHp7hswwKr4i4c7hx4tXInDZzzIc6AYeHLme8dJDJvB4"
+      }
+    },
+    "configValidationMode": "warn",
+    "serviceFilename": "serverless",
+    "initialServerlessConfig": {
+      "service": "fastapi-service",
+      "provider": {
+        "$ref": "$[\"service\"][\"provider\"]"
+      },
+      "functions": {
+        "$ref": "$[\"service\"][\"functions\"]"
+      },
+      "custom": {
+        "$ref": "$[\"service\"][\"custom\"]"
+      },
+      "package": {
+        "patterns": [
+          "../app/**",
+          "../lambda_handler.py"
+        ],
+        "artifactsS3KeyDirname": "serverless/fastapi-service/dev/code-artifacts",
+        "deploymentBucket": "serverless-framework-deployments-us-east-1-4082cc96-9bff",
+        "artifact": "/home/dima/Desktop/kisiland-project/kisiland/infrastructure/.serverless/fastapi-service.zip",
+        "artifactDirectoryName": "serverless/fastapi-service/dev/1766835564355-2025-12-27T11:39:24.355Z"
+      }
+    },
+    "appId": null,
+    "orgId": null,
+    "layers": {},
+    "artifact": "/home/dima/Desktop/kisiland-project/kisiland/infrastructure/.serverless/fastapi-service.zip"
+  },
+  "package": {
+    "artifactDirectoryName": "serverless/fastapi-service/dev/1766835564355-2025-12-27T11:39:24.355Z",
+    "artifact": "fastapi-service.zip"
+  }
+}

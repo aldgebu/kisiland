@@ -1,33 +1,43 @@
 service: fastapi-service
 
-frameworkVersion: "3"
-
 provider:
   name: aws
   profile: kisiland
-  runtime: python3.11
+  runtime: python3.12
   region: us-east-1
   stage: dev
   memorySize: 512
   timeout: 30
 
+  environment:
+    STAGE: ${sls:stage}
+
+    ENV_TYPE: development
+    JWT_SECRET_KEY: 9fc336690a1744b1ad1c81e7566780f8
+
+#    DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/kisiland
+    DEV_DATABASE_URL: postgresql+asyncpg://postgres:c141ef8abaa84f748d4cb7c23626f282@kisiland-db.cg34gm8y4ymc.us-east-1.rds.amazonaws.com:5432/kisiland_dev
+    PROD_DATABASE_URL: postgresql+asyncpg://postgres:c141ef8abaa84f748d4cb7c23626f282@kisiland-db.cg34gm8y4ymc.us-east-1.rds.amazonaws.com:5432/kisiland_prod
+
+
 functions:
   api:
-    handler: app.main.handler
+    handler: lambda_handler.handler
     events:
       - httpApi:
           path: /{proxy+}
           method: ANY
 
-plugins:
-  - serverless-python-requirements
+#plugins:
+#  - serverless-python-requirements
 
 custom:
   pythonRequirements:
     fileName: ../requirements.txt
-    dockerizePip: true
-    slim: true
+    slim: false
+    invalidateCaches: true
 
 package:
   patterns:
     - ../app/**
+    - ../lambda_handler.py
