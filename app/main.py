@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+
+from app.db import engine
 
 from contextlib import asynccontextmanager
 
@@ -23,6 +25,12 @@ def create_fastapi_app() -> FastAPI:
 
     register_exceptions(fastapi_app)
     include_routers(fastapi_app)
+
+    @fastapi_app.middleware("http")
+    async def dispose_engine_middleware(request: Request, call_next):
+        response = await call_next(request)
+        await engine.dispose()
+        return response
 
     return fastapi_app
 
