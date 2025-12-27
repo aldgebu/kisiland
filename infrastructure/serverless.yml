@@ -1,0 +1,33 @@
+service: fastapi-service
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  profile: kisiland
+  runtime: python3.11
+  region: us-east-1
+  stage: dev
+  memorySize: 512
+  timeout: 30
+
+functions:
+  api:
+    handler: app.main.handler
+    events:
+      - httpApi:
+          path: /{proxy+}
+          method: ANY
+
+plugins:
+  - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    fileName: ../requirements.txt
+    dockerizePip: true
+    slim: true
+
+package:
+  patterns:
+    - ../app/**
