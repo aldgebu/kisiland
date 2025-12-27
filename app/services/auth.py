@@ -2,7 +2,7 @@ import jwt
 
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.settings import settings
 
@@ -18,22 +18,22 @@ from app.exceptions.general import UnauthorizedException
 
 
 class AuthService:
-    def __init__(self, db):
+    def __init__(self, db: AsyncSession):
         self.user_repository = UserRepository(db=db)
 
     async def authenticate(self, auth_data: AuthSchema):
         # Currently we use it as admin only auth method
-        users = await self.user_repository.find(
+        user = await self.user_repository.find(
             username=auth_data.username,
             status=UserStatusEnum.ADMIN.value,
+            get_first=True,
         )
 
-        if not users or not verify_password(auth_data.password, users[0].get('password')):
+        if not user or not verify_password(auth_data.password, user.password):
             raise UnauthorizedException()
 
-        user = users[0]
         payload = {
-            'sub': str(user['_id']),
+            'sub': str(user.id),
             'username': auth_data.username,
         }
         token = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm="HS256")

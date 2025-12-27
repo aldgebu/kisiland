@@ -38,18 +38,9 @@ class MembershipFindSchema(PaginationSchema):
 
 
 class MembershipSchema(MembershipCreateSchema):
-    id: str
+    id: int
     visits: int
     remaining_visits: int = 0
-
-    @model_validator(mode='before')
-    @classmethod
-    def validate_before(cls, data: dict):
-        _id = data.get('_id')
-        if _id and not isinstance(_id, str):
-            data['id'] = str(data['_id'])
-
-        return data
 
     @model_validator(mode='after')
     @classmethod

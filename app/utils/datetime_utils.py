@@ -12,10 +12,12 @@ class DatetimeUtils:
         seconds: int = 0,
         tz: ZoneInfo = ZoneInfo('UTC'),
         in_iso_format: bool = False,
+        get_naive: bool = True,
     ):
         delta = timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
         dt = datetime.now(tz=tz) + delta
 
+        dt = dt.replace(tzinfo=None)
         return dt.isoformat() if in_iso_format else dt
 
     @classmethod
@@ -30,4 +32,5 @@ class DatetimeUtils:
             time(23, 59, 59),
             tzinfo=tz,
         )
+        end_of_day = end_of_day.replace(tzinfo=None)
         return end_of_day.isoformat() if in_iso_format else end_of_day

@@ -25,6 +25,19 @@ class UnlimitedVisitPricingException(Exception):
 
 
 def register_exceptions(app: FastAPI):
+    @app.exception_handler(Exception)
+    async def handle_exceptions(
+        request: Request,
+        exc: Exception
+    ):
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                'error': 'Internal Server Error',
+                'message': 'Call ALDGEBU!'
+            }
+        )
+
     @app.exception_handler(UnauthorizedException)
     async def handle_unauthorized_exception(
         request: Request,

@@ -1,11 +1,13 @@
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.repositories.document import DocumentRepository
+from app.models.pricing import Pricing
+
+from app.repositories.base_repository import BaseRepository
 
 
-class PricingRepository(DocumentRepository):
-    def __init__(self, db: AsyncIOMotorDatabase):
+class PricingRepository(BaseRepository):
+    def __init__(self, db: AsyncSession):
         self.db = db
-        self.collection_name = 'prices'
+        self.model = Pricing
 
-        super().__init__(db=db, collection_name=self.collection_name)
+        super().__init__(db=self.db, model=self.model)

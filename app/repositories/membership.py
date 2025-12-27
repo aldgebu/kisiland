@@ -2,31 +2,35 @@ from typing import Optional
 
 from datetime import datetime
 
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from operator import le
 
-from app.repositories.document import DocumentRepository
+from sqlalchemy import select
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.membership import Membership
+
+from app.repositories.base_repository import BaseRepository
 
 
-class MembershipRepository(DocumentRepository):
-    def __init__(self, db: AsyncIOMotorDatabase):
+class MembershipRepository(BaseRepository):
+    def __init__(self, db: AsyncSession):
         self.db = db
-        self.collection_name = "memberships"
+        self.model = Membership
 
-        super().__init__(db=db, collection_name=self.collection_name)
+        super().__init__(db=self.db, model=self.model)
 
     async def get_memberships(
         self,
         from_time: Optional[datetime] = None,
         to_time: Optional[datetime] = None,
     ):
-        filters = {}
+        stmt = select(self.model)
 
-        if from_time or to_time:
-            filters['created_at'] = {}
-            if from_time:
-                filters['created_at']['$gte'] = from_time
-            if to_time:
-                filters['created_at']['$lte'] = to_time
+        if from_time:
+            stmt = stmt.where(le(from_time, self.model.created_at))
+        if to_time:
+            stmt = stmt.where(le(self.model.created_at, to_time))
 
-        cursor = self.collection.find(filters)
-        return await cursor.to_list(length=None)
+        result = await self.db.execute(stmt)
+        return result.scalars().all()

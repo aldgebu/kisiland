@@ -1,15 +1,16 @@
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.exceptions.general import NotFoundException, MembershipVisitsLimitReachedException
+from app.schemas.statistic import MembershipStatisticSchema
 from app.schemas.membership import MembershipSchema, MembershipCreateSchema, MembershipFindSchema, \
     MembershipUpdateSchema
 
 from app.repositories.membership import MembershipRepository
-from app.schemas.statistic import MembershipStatisticSchema
+
+from app.exceptions.general import NotFoundException, MembershipVisitsLimitReachedException
 
 
 class MembershipService:
-    def __init__(self, db: AsyncIOMotorDatabase):
+    def __init__(self, db: AsyncSession):
         self.repository = MembershipRepository(db=db)
 
     async def get_statistics(self, params: MembershipStatisticSchema):
@@ -17,60 +18,55 @@ class MembershipService:
 
         income = 0
         for membership in memberships:
-            income += membership['payment_amount'] or 0
+            income += membership.payment_amount or 0
 
         return {'income': income}
 
     async def find(self, membership_info: MembershipFindSchema):
         return await self.repository.find(
-            sort=[('created_at', 1)],
+            sort_by_created_at_desc=True,
             **membership_info.model_dump(exclude_none=True)
         )
 
     async def create(self, member_data: MembershipCreateSchema) -> MembershipSchema:
-        inserted_id = await self.repository.insert_one(
-            visits=0,
-            **member_data.model_dump()
-        )
-        member = MembershipSchema(
-            id=inserted_id,
-            visits=0,
+        return await self.repository.create(
             **member_data.model_dump()
         )
 
-        return member
-
-    async def update(self, membership_id: str, membership_updates: MembershipUpdateSchema):
-        updated_data = await self.repository.find_one_and_update(
-            filters={'_id': membership_id},
-            updates={**membership_updates.model_dump(exclude_none=True)}
-        )
-
-        return MembershipSchema(**updated_data)
-
-    async def delete_membership(self, membership_id: str):
-        await self.repository.delete_one(filters={'_id': membership_id})
-
-    async def validate_and_use_membership_visit(self, membership_id: str):
-        memberships = await self.repository.find(id=membership_id)
-        if not memberships:
+    async def update(self, membership_id: int, membership_updates: MembershipUpdateSchema):
+        membership = await self.repository.find(id=membership_id, get_first=True)
+        if not membership:
             raise NotFoundException('Membership')
 
-        membership = memberships[0]
-        if not membership['visits'] < membership['allowed_visits']:
+        update_data = membership_updates.model_dump(exclude_none=True)
+        for key, value in update_data.items():
+            setattr(membership, key, value)
+
+        await self.repository.save_to_db(membership, commit=True)
+        return membership
+
+    async def delete_membership(self, membership_id: int):
+        if not await self.repository.delete_by_id(data_id=membership_id):
+            raise NotFoundException('Membership')
+
+    async def validate_and_use_membership_visit(self, membership_id: int):
+        membership = await self.repository.find(id=membership_id, get_first=True)
+        if not membership:
+            raise NotFoundException('Membership')
+
+        if not membership.visits < membership.allowed_visits:
             raise MembershipVisitsLimitReachedException()
 
-        return await self.repository.find_one_and_update(
-            filters={'_id': membership_id},
-            updates={'visits': membership['visits'] + 1}
-        )
+        membership.visits += 1
+        await self.repository.save_to_db(membership, commit=True)
+        return membership
 
-    async def delete_visit(self, membership_id: str):
-        membership = (await self.repository.find(id=membership_id))[0]
+    async def delete_visit(self, membership_id: int):
+        membership = await self.repository.find(id=membership_id, get_first=True)
+        if not membership:
+            raise NotFoundException('Membership')
 
-        membership = self.repository.find_one_and_update(
-            filters={'_id': membership_id},
-            updates={'visits': membership['visits'] - 1}
-        )
+        membership.visits = membership.visits - 1
+        await self.repository.save_to_db(membership, commit=True)
 
         return membership
