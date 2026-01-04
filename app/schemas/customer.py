@@ -1,8 +1,8 @@
-from typing import Optional
+from typing import List, Optional
 
 from datetime import datetime
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel
 
 from app.enums.payment import PaymentTypeEnum
 
@@ -36,7 +36,7 @@ class CustomerFindSchema(PaginationSchema):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
 
-    membership_id: Optional[str] = None
+    membership_id: Optional[int] = None
 
     status: Optional[CustomerStatusEnum] = None
 
@@ -53,3 +53,8 @@ class CustomerSchema(CustomerCreateSchema):
     end_time: Optional[datetime] = None
 
     status: CustomerStatusEnum
+
+
+class CustomerFindResponseSchema(BaseModel):
+    income: float
+    customers: List[CustomerSchema]

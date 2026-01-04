@@ -13,10 +13,6 @@ class BaseRepository:
         self.model = model
 
     async def save_to_db(self, obj, flush: bool = False, commit: bool = False):
-        print(type(obj))
-        print(obj)
-        print(flush)
-        print(commit)
         try:
             self.db.add(obj)
             if flush:
@@ -63,7 +59,7 @@ class BaseRepository:
         id: Optional[int] = None,
         first_name: Optional[str] = None,
         last_name: Optional[str] = None,
-        membership_id: Optional[str] = None,
+        membership_id: Optional[int] = None,
         payment_type: Optional[str] = None,
         visit_type: Optional[str] = None,
         from_time: Optional[datetime] = None,

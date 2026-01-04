@@ -9,13 +9,13 @@ from app.db import get_db
 from app.services.auth import AuthService
 from app.services.customer import CustomerService
 
-from app.schemas.customer import CustomerCreateSchema, CustomerUpdateSchema, CustomerSchema, CustomerFindSchema
-
+from app.schemas.customer import CustomerCreateSchema, CustomerUpdateSchema, CustomerSchema, CustomerFindSchema, \
+    CustomerFindResponseSchema
 
 router = APIRouter(prefix='/customer', tags=['Customers'])
 
 
-@router.get('/', status_code=status.HTTP_200_OK, response_model=List[CustomerSchema])
+@router.get('/', status_code=status.HTTP_200_OK, response_model=CustomerFindResponseSchema)
 async def get_customers(
     filters: CustomerFindSchema = Depends(),
     db: AsyncSession = Depends(get_db),

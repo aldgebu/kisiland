@@ -43,11 +43,20 @@ class CustomerService:
 
         return {'income': income}
 
-    async def find(self, filters: CustomerFindSchema) -> List[CustomerSchema]:
-        return await self.repository.find(
+    async def find(self, filters: CustomerFindSchema):
+        customers = await self.repository.find(
             sort_by_start_time_desc=True,
             **filters.model_dump(exclude_none=True)
         )
+
+        income = await self.repository.get_customers_total_income(
+            **filters.model_dump(exclude={'page', 'page_size'})
+        )
+
+        return {
+            'income': income,
+            'customers': customers,
+        }
 
     async def get_active_customers(self):
         current_time = DatetimeUtils.get_datetime()
