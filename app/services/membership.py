@@ -23,10 +23,19 @@ class MembershipService:
         return {'income': income}
 
     async def find(self, membership_info: MembershipFindSchema):
-        return await self.repository.find(
+        memberships = await self.repository.find(
             sort_by_created_at_desc=True,
             **membership_info.model_dump(exclude_none=True)
         )
+
+        income = await self.repository.get_memberships_total_income(
+            **membership_info.model_dump(exclude={'page', 'page_size'})
+        )
+
+        return {
+            'income': income,
+            'memberships': memberships,
+        }
 
     async def create(self, member_data: MembershipCreateSchema) -> MembershipSchema:
         return await self.repository.create(

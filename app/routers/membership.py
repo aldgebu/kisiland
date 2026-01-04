@@ -10,13 +10,12 @@ from app.services.auth import AuthService
 from app.services.membership import MembershipService
 
 from app.schemas.membership import MembershipSchema, MembershipFindSchema, MembershipUpdateSchema, \
-    MembershipCreateSchema
-
+    MembershipCreateSchema, MembershipFindResponseSchema
 
 router = APIRouter(prefix='/membership', tags=['membership'])
 
 
-@router.get('', status_code=status.HTTP_200_OK, response_model=List[MembershipSchema])
+@router.get('', status_code=status.HTTP_200_OK, response_model=MembershipFindResponseSchema)
 async def get_members(
     membership_info: MembershipFindSchema = Depends(),
     db: AsyncSession = Depends(get_db),

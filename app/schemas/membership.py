@@ -1,4 +1,4 @@
-from typing import Optional, Self
+from typing import Optional, Self, List
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -48,3 +48,8 @@ class MembershipSchema(MembershipCreateSchema):
         data.remaining_visits = data.allowed_visits - data.visits
 
         return data
+
+
+class MembershipFindResponseSchema(BaseModel):
+    income: float
+    memberships: List[MembershipSchema]

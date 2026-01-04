@@ -2,9 +2,9 @@ from typing import Optional
 
 from datetime import datetime
 
-from operator import le
+from operator import le, eq
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,3 +34,27 @@ class MembershipRepository(BaseRepository):
 
         result = await self.db.execute(stmt)
         return result.scalars().all()
+
+    async def get_memberships_total_income(
+        self,
+        last_name: Optional[str] = None,
+        first_name: Optional[str] = None,
+        personal_number: Optional[str] = None,
+        parent_last_name: Optional[str] = None,
+        parent_first_name: Optional[str] = None,
+    ):
+        stmt = select(func.coalesce(func.sum(self.model.payment_amount), 0))
+
+        if last_name:
+            stmt = stmt.where(eq(self.model.last_name, last_name))
+        if first_name:
+            stmt = stmt.where(eq(self.model.first_name, first_name))
+        if personal_number:
+            stmt = stmt.where(eq(self.model.personal_number, personal_number))
+        if parent_last_name:
+            stmt = stmt.where(eq(self.model.parent_last_name, parent_last_name))
+        if parent_first_name:
+            stmt = stmt.where(eq(self.model.parent_first_name, parent_first_name))
+
+        result = await self.db.execute(stmt)
+        return result.scalar_one()
