@@ -52,4 +52,5 @@ class MembershipSchema(MembershipCreateSchema):
 
 class MembershipFindResponseSchema(BaseModel):
     income: float
+    total_pages: int
     memberships: List[MembershipSchema]

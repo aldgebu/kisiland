@@ -57,4 +57,5 @@ class CustomerSchema(CustomerCreateSchema):
 
 class CustomerFindResponseSchema(BaseModel):
     income: float
+    total_pages: int
     customers: List[CustomerSchema]

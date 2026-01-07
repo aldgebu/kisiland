@@ -31,9 +31,18 @@ class MembershipService:
         income = await self.repository.get_memberships_total_income(
             **membership_info.model_dump(exclude={'page', 'page_size'})
         )
+        memberships_count = await self.repository.find(
+            **membership_info.model_dump(exclude={'page', 'page_size'}),
+            get_count=True,
+        )
+        total_pages = (
+            memberships_count // membership_info.page_size +
+            (memberships_count % membership_info.page_size > 0)
+        )
 
         return {
             'income': income,
+            'total_pages': total_pages,
             'memberships': memberships,
         }
 

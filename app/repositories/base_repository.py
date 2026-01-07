@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import select, delete, desc
+from sqlalchemy import select, delete, desc, func
 
 from datetime import datetime
 
@@ -67,8 +67,13 @@ class BaseRepository:
         sort_by_start_time_desc: bool = False,
         sort_by_created_at_desc: bool = False,
         get_first: bool = False,
+        get_count: bool = False,
     ):
-        stmt = select(self.model)
+        stmt = (
+            select(func.count()).select_from(self.model)
+            if get_count
+            else select(self.model)
+        )
 
         if id:
             stmt = stmt.where(self.model.id == id)
@@ -98,6 +103,10 @@ class BaseRepository:
             stmt = stmt.where(self.model.username == username)
         if status:
             stmt = stmt.where(self.model.status == status)
+
+        if get_count:
+            result = await self.db.execute(stmt)
+            return result.scalar()
 
         if sort_by_start_time_desc:
             stmt = stmt.order_by(desc(self.model.start_time))

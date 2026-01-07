@@ -53,9 +53,16 @@ class CustomerService:
             **filters.model_dump(exclude={'page', 'page_size'})
         )
 
+        customers_count = await self.repository.find(
+            **filters.model_dump(exclude={'page', 'page_size'}),
+            get_count=True,
+        )
+        total_pages = customers_count // filters.page_size + (customers_count % filters.page_size > 0)
+
         return {
             'income': income,
             'customers': customers,
+            'total_pages': total_pages,
         }
 
     async def get_active_customers(self):
