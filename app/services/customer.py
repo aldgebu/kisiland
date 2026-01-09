@@ -80,7 +80,7 @@ class CustomerService:
                 membership_id=customer.membership_id
             )
 
-            customer.last_name=membership.lsat_name
+            customer.last_name=membership.last_name
             customer.first_name=membership.first_name
         elif customer.visit_type == CustomerVisitTypeEnum.HOURLY:
             end_time = await self.pricing_service.determine_visit_end_time(
